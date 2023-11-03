@@ -4,15 +4,8 @@ pipeline {
       DDOCKERHUB_CREDENTIALS = credentials('mullencsllc-dockerhub')
       }
    stages {
-    
-     stage ('Build') {
-      agent {label 'awsDeploy2'}
-      steps {
-          
-          sh 'docker build -t mullencsllc/bankapp007 .'
-    }
-}
-    stage ('Test') {
+
+     stage ('Test') {
       steps {
         sh '''#!/bin/bash
         python3.7 -m venv test
@@ -31,8 +24,15 @@ pipeline {
         }
        
       }
-   }
+   }    
      
+     stage ('Build') {
+      agent {label 'awsDeploy2'}
+      steps {       
+          sh 'docker build -t mullencsllc/bankapp007 .'
+    }
+}
+
      stage ('Login') {
         steps {
           sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
