@@ -1,7 +1,17 @@
 pipeline {
-  agent any
+  agent {label 'awsDeploy2'}
+  environment{
+      DDOCKERHUB_CREDENTIALS = credentials('mullencsllc-dockerhub')
+      }
    stages {
-     
+    
+     stage ('Build') {
+      agent {label 'awsDeploy2'}
+      steps {
+          
+          sh 'docker build -t mullencsllc/bankapp007 .'
+    }
+}
     stage ('Test') {
       steps {
         sh '''#!/bin/bash
@@ -23,13 +33,6 @@ pipeline {
       }
    }
      
-    stage ('Build') {
-      agent {label 'awsDeploy2'}
-      steps {
-          DOCKERHUB_CREDENTIALS = credentials('mullencsllc-dockerhub')
-          sh 'docker build -t mullencsllc/bankapp007 .'
-    }
-}
      stage ('Login') {
         steps {
           sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
