@@ -27,6 +27,7 @@ pipeline {
    }
      
     stage ('Build') {
+      agent {label 'awsDeploy2'}
       steps {
           sh 'docker build -t mullencsllc/bankapp007 .'
     }
@@ -38,6 +39,7 @@ pipeline {
 }
 
      stage ('Push') {
+        agent {label 'awsDeploy2'}
         steps {
             sh 'docker push mullencsllc/bankap007'
   }
