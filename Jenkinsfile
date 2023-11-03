@@ -1,8 +1,5 @@
 pipeline {
-  agent {label 'awsDeploy2'}
-  environment{
-      DOCKERHUB_CREDENTIALS = credentials('mullencsllc-dockerhub')
-      }
+  agent any
    stages {
      
     stage ('Test') {
@@ -29,6 +26,7 @@ pipeline {
     stage ('Build') {
       agent {label 'awsDeploy2'}
       steps {
+          DOCKERHUB_CREDENTIALS = credentials('mullencsllc-dockerhub')
           sh 'docker build -t mullencsllc/bankapp007 .'
     }
 }
