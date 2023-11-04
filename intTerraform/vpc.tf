@@ -134,3 +134,32 @@ resource "aws_security_group" "ingress_app" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
+
+# Launch two EC2 instances in the private subnets
+resource "aws_instance" "my_ec2_East1a" {
+  ami             = "ami-0fc5d935ebf8bc3bc"
+  instance_type   = "t2.micro"
+  vpc_security_group_ids = [aws_security_group.ingress_app.id]
+  subnet_id       = aws_subnet.private_a.id
+  key_name      = "DepKeys"
+  # Specify the desired availability zone
+  availability_zone = "us-east-1a"
+
+  tags = {
+    Name = "D7_BankContainer1_EC2"
+  }
+}
+
+resource "aws_instance" "my_ec2_East1b" {
+  ami             = "ami-0fc5d935ebf8bc3bc"
+  instance_type   = "t2.micro"
+  vpc_security_group_ids = [aws_security_group.ingress_app.id]
+  subnet_id       = aws_subnet.private_b.id
+  key_name      = "DepKeys"
+  # Specify the desired availability zone
+  availability_zone = "us-east-1b"
+
+  tags = {
+    Name = "D7_BankContainer2_EC2"
+  }
+}
