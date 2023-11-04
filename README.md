@@ -10,46 +10,35 @@ By: Andrew Mullen
 
 Purpose:
 Demonstrate our ability to deploy ECS infrastructure using Terraform.  First, deploy a Jenkins infrastructure with a Main, Docker, and 
-Agent server.  Also, utilize Jenkins agents, to use Terraform and Docker to deploy the Banking Flask application to ECS.
+Agent server.  Also, utilize Jenkins agents to use Terraform and Docker to deploy the Banking Flask application to ECS.
 
 
 ## Steps:
 
-### 1. Follow the naming convention below for all resources created in AWS:
-```
-VPC:
-- deplpoyment#-vpc-region: 
-	- deployment6-vpc-east
-	- deployment6-vpc-west
-Instances:
-- Function#-region: 
-	- applicationServer01-east
-	- applicationServer02-east
-	- applicationServer01-west
-	- applicationServer02-west
-Security Groups:
-- purposeSG: 
-	- US_East_1_HttpAcessSG
-	- US_West_2_HttpAcessSG
-Subnets:
-- purposeSubnet#:
-	- publicSubnet01
-	- publicSubnet02
-Load Balancer:
-- purpose-region: 
-	- ALB-east
-	- ALB-west
-```
+### 1. Create a dockerfile of the Banking App and place it into your repository (Make sure you use the banking app connected to the RDS database) Docker [file](https://github.com/andmulLABS01/Deployment_3AM/blob/main/Depoyment3.drawio.png)
 
-### 2. Use Terraform to create 2 instances in your default VPC for a Jenkins manager and agent architecture with the following installed:  Terraform file [HERE](https://github.com/andmulLABS01/Deployment_3AM/blob/main/Depoyment3.drawio.png)
+### 2. Change the following resources name tags or name values below:
 ```
-Instance 1: 
-- Jenkins, software-properties-common, add-apt-repository -y ppa:deadsnakes/ppa, python3.7, python3.7-venv, build-essential, libmysqlclient-dev, python3.7-dev
-  - Link to the user data script [HERE](https://github.com/andmulLABS01/Deployment_3AM/blob/main/Depoyment3.drawio.png)
-- Create the Jenkins Agent
-- Configure AWS credentials in Jenkins.
-  - [Instructions here](https://scribehow.com/shared/How_to_Securely_Configure_AWS_Access_Keys_in_Jenkins__MNeQvA0RSOWj4Ig3pdzIPw)
-- Place your Terraform files and user data script in the initTerraform directory.
+main.tf:
+- #Cluster name
+- #Task Definition: Family
+- container_definitions:
+    - name
+    - image
+    - containerPort
+- execution_role_arn
+- task_role_arn
+- #ECS Service name
+- container_name
+- container_port
+
+ALB.tf
+- #Traget Group name
+- port
+- #Application Load Balancer name
+
+
+```
 
 Instance 2: 
 - Terraform and default-jre
