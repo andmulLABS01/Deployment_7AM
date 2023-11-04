@@ -14,5 +14,5 @@ RUN python load_data.py
 
 EXPOSE 8000
 
-ENTRYPOINT python -m gunicorn app:app -b 0.0.0.0
+CMD [ "gunicorn", "--bind", "0.0.0.0", "app:app"] 
 
