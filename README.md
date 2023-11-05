@@ -15,80 +15,89 @@ Agent server.  Also, utilize Jenkins agents to use Terraform and Docker to deplo
 
 ## Steps:
 
-### 1. Create a dockerfile of the Banking App and place it into your repository (Make sure you use the banking app connected to the RDS database) Docker [file](https://github.com/andmulLABS01/Deployment_3AM/blob/main/Depoyment3.drawio.png)
+### 1. Create a dockerfile of the Banking App and place it into your repository (Make sure you use the banking app connected to the RDS database) Docker [file](https://github.com/andmulLABS01/Deployment_7AM/blob/main/dockerfile)
+- You will need to modify the database.py, app.py, and load_data.py files to point them to the RDS database.
+- If you are using an existing RDS database that has the data loaded from load_data.py, you will not need to run load_data.py in your dockerfile.
 
-### 2. Change the following resources name tags or name values below:
+### 2. Change the following resources' name tags or name values below: (these changes can be done in step 3d)
 ```
 main.tf:
-- #Cluster name
-- #Task Definition: Family
+- #Cluster name: Bank007-cluster
+- #Task Definition:
+    - Family:Bank007-task
 - container_definitions:
-    - name
-    - image
-    - containerPort
-- execution_role_arn
-- task_role_arn
-- #ECS Service name
-- container_name
-- container_port
+    - name: Bank007-container
+    - image: mullencsllc/bankapp007:latest
+    - containerPort: 8000
+- execution_role_arn: arn::/ecs_task
+- task_role_arn: arn::/ecs_task
+- #ECS Service
+    - name: Bank007-ecs-service
+-#Load_Balnancer
+    - container_name: Bank007-container"
+    - container_port: 8000
 
 ALB.tf
-- #Traget Group name
-- port
-- #Application Load Balancer name
-
-
+- #Traget Group
+   - name: Bank007-app
+   - port: 8000
+- #Application Load Balancer
+   - name: Bank007-lb
 ```
 
-Instance 2: 
+### 3. Use Terraform to create 3 instances in your default VPC for a Jenkins manager and agents architecture (see below for more information) Terraform [file](https://github.com/andmulLABS01/Deployment_7AM/blob/main/jenkins_main.tf)
+Instance 1:
+- Jenkins, software-properties-common, add-apt-repository -y ppa:deadsnakes/ppa, python3.7, python3.7-venv, build-essential, libmysqlclient-dev, python3.7-dev
+  - Link to the user data script [HERE](https://github.com/andmulLABS01/Deployment_7AM/blob/main/s_jenkins.sh)
+- Create the Jenkins Agents
+  - awsDeploy
+  - awsDeploy2
+- Configure AWS credentials in Jenkins.
+- Configure DockerHub credentials in Jenkins.
+  - You will need to go into DockerHub and generate an Access Token to put into Jenkins global credentials
+  - When you enter in your username and password, in the ID section, enter {your-username}-dockerhub EXAMPLE: MRanderson-dockerhub
+- Install the Docker Pipeline plugin on Jenkins
+Instance 2:
+- Docker, default-jre, software-properties-common, add-apt-repository -y ppa:deadsnakes/ppa, python3.7, python3.7-venv, build-essential, libmysqlclient-dev, python3.7-dev
+  - Link to the user data script [HERE](https://github.com/andmulLABS01/Deployment_7AM/blob/main/s_docker.sh)
+Instance 3:
 - Terraform and default-jre
-  - Link to the user data script [HERE](https://github.com/andmulLABS01/Deployment_3AM/blob/main/Depoyment3.drawio.png)
-```
+  - Link to the user data script [HERE](https://github.com/andmulLABS01/Deployment_7AM/blob/main/s_terraform.sh)
 
-#### 2a. Clone the Kura repository to our Jenkins instance and push to new repository
-	- Create new repository on GitHub
-	- Clone the Kura Deployment 6 repository to the local instance
+#### 3a. Clone the Kura repository to our Jenkins instance and push it to the new repository
+	- Create a new repository on GitHub
+	- Clone the Kura Deployment 7 repository to the local instance
 		- Clone using `git clone` command and the URL of the repository
 			- This will copy the files to the local instance 
-		- Enter the following to gain access into GitHub repository
+		- Enter the following to gain access to GitHub repository
 			- `git config --global user.name username`
 			- `git config --global user.email email@address`
-		- Next you will push the files from the local instance to the new repository (Done from local instance via command line)
+		- Next, you will push the files from the local instance to the new repository (Done from the local instance via the command line)
 			- `git push`
 			- enter GitHub username
-			- enter perosnal token (GitHub requires this as it is more secure)
+			- enter personal token (GitHub requires this as it is more secure)
 			
-#### 2b. Create the Jenkins agent on the second instance
-	- This is the step were we will configure and later utilize a Jenkins Agent to deploy the applicaiton infrastructe and the Banking applicaiton.
-		- Follow the steps in this link to create a Jenkins agent: [link](https://scribehow.com/shared/Step-by-step_Guide_Creating_an_Agent_in_Jenkins__xeyUT01pSAiWXC3qN42q5w)
+#### 3b. Create the Jenkins agents on the second and third instances. Follow the steps in this link to create a Jenkins agent: [link](https://scribehow.com/shared/Step-by-step_Guide_Creating_an_Agent_in_Jenkins__xeyUT01pSAiWXC3qN42q5w)
+- This is the step where we will configure and later utilize Jenkins Agents to deploy the infrastructure and ECS.
+- Repeat to configure the second agent.
 
-#### 2c. Configure your AWS credentials in Jenkins
-	- This is the step were we will configure our AWS secret keys in Jenkins to be used in ourand later utilize a Jenkins Agent to deploy the Banking applicaiton.
-		- Follow the steps in this link to create a Jenkins agent: [link](https://scribehow.com/shared/Step-by-step_Guide_Creating_an_Agent_in_Jenkins__xeyUT01pSAiWXC3qN42q5w)  			
+#### 3c. Follow the steps in this link to configure AWS and DockerHub credentials in Jenkins: [link](https://scribehow.com/shared/How_to_Securely_Configure_AWS_Access_Keys_in_Jenkins__MNeQvA0RSOWj4Ig3pdzIPw)  
+- This is the step where we will configure our AWS secret keys in Jenkins to later be utilized by our Jenkins Agent to deploy the Banking application.
+- Repeat to configure DockerHub credentials and replace the ASW steps with username and password.
+					
 
-#### 2d. Place your Terraform files and user data script in the initTerraform directory.
-	- This is the location where your main.tf, variables.tf and user data script need to be in order for the jenkinsfile to access them to test the applicaiton and deploy the applicaiton infrastructe.
-		- The link to the main.tf file [HERE](https://github.com/andmulLABS01/Deployment_3AM/blob/main/Depoyment3.drawio.png)	
-		- The link to the variables.tf file [HERE](https://github.com/andmulLABS01/Deployment_3AM/blob/main/Depoyment3.drawio.png)		
-		- The link to the deploy2.sh file [HERE](https://github.com/andmulLABS01/Deployment_3AM/blob/main/Depoyment3.drawio.png)		
-		
-### 3. Create a two VPCs with Terraform, using the Jenkins agent, 1 VPC in US-east-1 and the other VPC in US-west-2. The following components MUST be in each VPC - 2 AZ's, 2 Public Subnets, 2 EC2's, 1 Route Table, Security Group Ports: 8000, 22
-   - This process is to give us practice in using Terraform to create our AWS infrastructe.  
-   - Also we will utilize Git to continue gaining experience in day-to-day operations of a DevOps engineer.
-   - We will use Jenkins Agents to deploy our AWS applicaiton infrastructe and the Banking Flask applicaiton with the jenkinsfile on to the application instances. 
+#### 3d. Branch, update, and merge the following: MySQL endpoints, if [creating](https://scribehow.com/shared/How_to_Create_an_AWS_RDS_Database__zqPZ-jdRTHqiOGdhjMI8Zw) a new RDS database, changes to the endpoints for the database.py, load_data.py, app.py, and edits to the main.tf, ALB.tf, and the jenkinsfile in your repository.   	![image](https://github.com/kura-labs-org/c4_deployment-6/blob/main/format.png)  
 
-#### 3a. Create an RDS database
-	- We are creating a RDS database to link our applicaiton databases together and create our 2nd tier.
-		- Instructions to create the RDS database is [here](https://scribehow.com/shared/How_to_Create_an_AWS_RDS_Database__zqPZ-jdRTHqiOGdhjMI8Zw).
-   
-#### 3b. Branch, update, and merge the following MySQL endpoints changes to the endpoints for the database.py, load_data.py, and app.py in your repository.
 	- Create a new branch in your repository
 		- `git branch newbranchName`
-	- Switch to the new branch and edit the database.py, load_data.py, and app.py files.
+	- Switch to the new branch and edit the database.py, load_data.py, app.py, and Jenkinsfile files.
 		- `git switch newbranchName`
-		- The red, blue, and green areas of the DATABASE_URL you'll need to edit:
-   ![image](https://github.com/kura-labs-org/c4_deployment-6/blob/main/format.png)Update 
-	- After modifing the files commit the changes
+		- The red, blue, and green areas of the DATABASE_URL you'll need to edit
+  		- Jenkinsfile DockerHub username on line 4.
+    		- Jenkinsfile lines 31 and 42 with your image name.
+      		- main.tf changes from step 2
+		- ALB.tf changes from step 2
+	- After modifying the files commit the changes
 		- `git add "filename"`
 		- `git commit -m "message"`
 	- Merge the changes into the main branch
@@ -96,96 +105,113 @@ Instance 2:
 		- `git merge second main`
 	- Push the updates to your repository
 		- `git push`
-		
-### 6. Create a Jenkins multibranch pipeline and run the Jenkinsfile
 
-- Jenkins is the main tool used in this deployment for pulling the program from the GitHub repository, then building and testing the files to be deployed to instances.
+		
+### 4. Observe the VPC.tf file and make sure the below resources are being created: 
+    - 2 AZ's
+    - 2 Public Subnets
+    - 2 Private Subnets
+    - 1 NAT Gateway
+    - 2 Route Table
+    - Security Group Ports: 8000
+    - Security Group Ports: 80   
+- We are observing to see how to draw our system diagram, gaining an understanding of how our infrastructure is created and how network traffic is routed from the User to the ECS hosting our banking application.
+
+### 5. Observe the Terraform resources in the main.tf and ALB.tf:
+```
+- aws_ecs_cluster
+  - Creates our cluster which is a logical grouping of tasks or services.
+- aws_cloudwatch_log_group
+  - Monitors our ECS bank app logs
+- aws_ecs_task_definition
+  - Defines our container and pull our image from DockerHub
+- aws_ecs_service
+  - Runs and maintains 2 instances of our task definitions.
+- aws_lb_target_group
+  - The tasks created in our ECS to run our bank app image
+- aws_alb
+  - In security group HTTP, created in VPC.tf
+  - Balancing traffic between both Public Subnets a & b
+- aws_alb_listener
+  - Listening on port 80 for traffic
+  - Forwarding traffic to our target group (our ECS container)
+``` 
+   
+	
+### 6. Create a Jenkins multibranch pipeline and run the Jenkinsfile
+- Jenkins is the main tool used in this deployment for pulling the program from the GitHub repository, and then building and testing the files to be deployed to instances.
 - Creating a multibranch pipeline gives the ability to implement different Jenkinsfiles for different branches of the same project.
 - A Jenkinsfile is used by Jenkins to list out the steps to be taken in the deployment pipeline.
 - A Jenkins agent is a machine or container that connects to a Jenkins controller and executes tasks when directed by the controller. 
-- Agents utilize lables to know what commands to execute in the jenkinsfile. 
-
+- Agents utilize labels to know what commands to execute in the jenkinsfile. 
+- The Build, Test, Login, and Push stages are using agent awsDeploy2 (Docker), while Init, Plan, and Apply are using agent awsDeploy (Terraform).
+  
 - Steps in the Jenkinsfile are as follows:
   - Build
-    - The environment is built to see if the application can run.
+    - Uses the dockerfile to build the image.
   - Test
     - Unit test is performed to test specific functions in the application.
+  - Login
+    - Uses credentials to log into DockerHub.
+  - Push
+    - Pushes the image to DockerHub.
   - Init
-	- Uses the Jenkins Agent to run the Init command activate the Terraform process.
+    - Runs the Init command to activate the Terraform process.
   - Plan
-    - Uses the Jenkins Agent to run the Plan command in Terraform to map out the main.tf requirements. 	
+    - Runs the Plan command in Terraform to map out the main.tf, ALB.tf, vpc.tf, and variables.tf requirements. 	
   - Apply
-    - Uses the Jenkins Agent to run the Apply command in Terraform to deploy the AWS applicaiton infrastructe. 
+    - Runs the Apply command in Terraform to deploy the AWS infrastructure.
+  - Destroy
+    - Runs the Destroy command in Terraform to delete the AWS infrastructure.  
 
 
 ### 7. Check your infrastructures and applications
-	- Here are the screen shots of the applications. 
-		-[East](https://github.com/andmulLABS01/Deployment_3AM/blob/main/Depoyment3.drawio.png)
-		-[West](https://github.com/andmulLABS01/Deployment_3AM/blob/main/Depoyment3.drawio.png)
+- Here are the screenshot of the application. 
+  - [App](https://github.com/andmulLABS01/Deployment_7AM/blob/main/DP7-app_running.PNG)
 
-	- Here are the screen shots of the infrastructes. 
-		-[East](https://github.com/andmulLABS01/Deployment_3AM/blob/main/Depoyment3.drawio.png)
-		-[West](https://github.com/andmulLABS01/Deployment_3AM/blob/main/Depoyment3.drawio.png)
+- Here are the screenshot of the infrastructure. 
+  - [Infra](https://github.com/andmulLABS01/Deployment_7AM/blob/main/DP7-infrastructure.PNG)
 	
-### 8. Create an application load balancer for US-east-1 and US-west-2. 
-- Application load balancers ensure that application traffic is distribuited between our two instances so that one is not overly utilize and more available to users.
-	-[Instructions here](https://scribehow.com/shared/Creating_Load_Balancer_with_Target_Groups_for_EC2_Instances__WjPUNqE4SLCpkcYRouPjjA)	
+### 8. Is your infrastructure secure? if yes or no, why?. 
+- Yes our infrastructure is secure because we have our application cluster in a private subnet, a security group around our cluster, and a security group applied to our load balancer. 
 
-### 9. With both infrastructures deployed, is there anything else we should add to our infrastructure?
 
-- I believe that we cauld add the following to to our infrastructes:
-	- Reverse web porxy such as nginx.  
-		- This will allow us to not have internet traffic directly access our applicaiton servers. 
-		- Have an additional layer of protection from our database.
-	- Private subnets
-		- The will allow for us to place our applicaiton servers in a subnet that does not have direct access to the internet and allows foradditional network segmentation increace security.
-	- NAT Gateway
-		- Will allow our applications to reply back to users as they will be in a private subnet that does not have access to the internet.
-	- API Gateway
-		- To increase security of who/what can access our applicaiton
-	- Network Load Balancer
-		- To balance the network traffic recieved from the API Gateway to our Aapplicaiton servers. load balancer to balance traffic between the two application servers to make the application more available to users.
+### 9. What happens when you terminate 1 instance? Is this infrastructure fault-tolerant?
 
+- When we terminate one instance our ecs_service spins up another instance.  Yes, this infrastructure is fault-tolerant to an extent. While we have ecs_service configured, if the entire region were to fail so would our clusters.
+
+### 10. Which subnet were the containers deployed in?
+- The containers were deployed in the private subnet of [subnet a and b](https://github.com/andmulLABS01/Deployment_7AM/blob/main/DP7-cont_subnets.PNG)
 
 ## System Diagram:
 
-To view the diagram of the system design/deployment pipeline, click [HERE](https://github.com/andmulLABS01/Deployment_3AM/blob/main/Depoyment3.drawio.png)
+To view the diagram of the system design/deployment pipeline, click [HERE](https://github.com/andmulLABS01/Deployment_7AM/blob/main/Deployment_7.drawio.png)
 
 ## Issues/Troubleshooting:
 
-AMI and Key Pair not working in Terraform when creating West-2 infrastructure.
+Jenkinsfile unexpected character #.
 
 Resolution Steps:
-- AMI needed to be from the US West region, was using the AMI for the US East retion in my Terraform file.
-- Needed to create a key pair for the US West region and use that in my Terraform file.
+- I used the wrong comment out character.  Changes from `#` to `//` and resolved the issue. 
 
-
-Testing deployment of applicaiton using the user data script not working.
+Build Stage Failed: Permission denied cannot connect to docker daemonTesting deployment of the application using the user data script not working.
 
 Resolution Steps:
-- Going through the user data script needed to add `source test/bin/activate` as the last line of the script to create reestablish the environment. If not, once the script is done running it will go back to the home shell.
+- Configured the wrong credentials in Jenkis for DockerHub.  Entered the correct credentials.
+- Added Ubuntu user to the Docker user group.
 
-
-Test phase not passing in the Jenkins build, Error unknown database.
-
-Resolution Steps:
-- Going through the documentation the error is associated to the wrong database name in the DATABASE_URL.  Looked at the name portion of the URL and fund the confiruration error `mydatabase` instead of `banking`.
-- Changed the name and the Jenkins build completed.
-
-
-Application load balancer test did not work.
+Waiting for the next available executioner on Jenkins (agent awsDeploy2).
 
 Resolution Steps:
-- Reviewed the documentation and found that I confgiured the new security group in the wrong VPC.
-- Made the changes to the ALB, selecting the correct VPC, and added the security group and the test completed successfully.
+- Reviewed the settings for the jenkins agent, and realized that I configured the wrong label ID.
+- Changed the label id from `awsDeploy` to `awsDeploy2`.
+
+Module Not Found error: No module named 'MySQLdb' when building the docker image.
+
+Resolution Steps:
+- Reviewed the docker file and needed to add `pip install mysqlclinet` to resolve the issue. 
 
 
 ## Conclusion:
 
-As stated in previous documentation this deployment was improved by automating the setup of infrastructure by using Terraform.  
-However, additional improvements can be made by changing how we utilize the Jenkins Agents.  For example we could have created two agents and modified the Jenkinsfile
-to utilze one for testing and one for deployment of the applicaiton.  We can also utilize ChatGPT to assist with error messages and ask to explain options in Jenkinsfile. Utilizing prompts such as:
-
-- You are a Jenkins pipeline expert
-- Check the Jenkinsfile for errors
-- Please explain the error, including the method to fix the error, and provide a link to documentation. 
+As stated in previous documentation this deployment was improved by automating the setup of infrastructure by using Terraform, utilizing docker and implementing ECS for our applications, and adding an application load balancer.  However, additional improvements can be made by adding Route 53 and an API Gateway.
